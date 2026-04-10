@@ -1,0 +1,42 @@
+key,name,type,url,description,category
+godot,Godot Engine,git,https://github.com/godotengine/godot-docs.git,Godot Engine complete documentation and GDScript/C# class reference,gamedev
+roblox,Roblox Studio,web,https://create.roblox.com/docs,Roblox Studio Creator Hub and Luau scripting API reference,gamedev
+unity,Unity,web,https://docs.unity3d.com/Manual/,Unity real-time game engine manual and scripting API,gamedev
+unreal,Unreal Engine,web,https://dev.epicgames.com/documentation/en-us/unreal-engine/unreal-engine-5-0-documentation,Unreal Engine 5 documentation and Blueprint/C++ reference,gamedev
+pygame,Pygame,web,https://www.pygame.org/docs/,Pygame Python 2D game development library,gamedev
+bevy,Bevy,web,https://bevyengine.org/learn/,Bevy data-driven Rust game engine documentation,gamedev
+react,React,web,https://react.dev/reference/react,React JavaScript library API reference and guides,frontend
+nextjs,Next.js,web,https://nextjs.org/docs,Next.js React framework with App Router documentation,frontend
+vue,Vue.js,git,https://github.com/vuejs/docs.git,Vue.js 3 progressive JavaScript framework documentation,frontend
+nuxt,Nuxt,web,https://nuxt.com/docs,Nuxt Vue.js meta-framework with SSR and SSG support,frontend
+svelte,Svelte,web,https://svelte.dev/docs/svelte/overview,Svelte reactive component framework documentation,frontend
+astro,Astro,git,https://github.com/withastro/docs.git,Astro content-focused web framework documentation,frontend
+solidjs,SolidJS,web,https://docs.solidjs.com/,SolidJS fine-grained reactive JavaScript library,frontend
+tailwind,Tailwind CSS,web,https://tailwindcss.com/docs,Tailwind CSS utility-first CSS framework documentation,frontend
+threejs,Three.js,web,https://threejs.org/docs/,Three.js WebGL 3D JavaScript library reference,graphics
+htmx,HTMX,web,https://htmx.org/docs/,HTMX high-power HTML hypermedia library,frontend
+pinia,Pinia,web,https://pinia.vuejs.org/core-concepts/,Pinia intuitive Vue.js state management library,frontend
+nodejs,Node.js,web,https://nodejs.org/en/docs/guides,Node.js JavaScript runtime documentation and guides,backend
+deno,Deno,git,https://github.com/denoland/deno-docs.git,Deno modern secure JavaScript/TypeScript runtime,backend
+bun,Bun,web,https://bun.sh/docs,Bun fast all-in-one JavaScript runtime and toolkit,backend
+express,Express,web,https://expressjs.com/en/4x/api.html,Express minimal flexible Node.js web framework,backend
+fastapi,FastAPI,web,https://fastapi.tiangolo.com/,FastAPI modern high-performance Python API framework,backend
+django,Django,web,https://docs.djangoproject.com/en/5.1/,Django batteries-included Python web framework,backend
+laravel,Laravel,git,https://github.com/laravel/docs.git,Laravel expressive PHP web application framework,backend
+supabase,Supabase,web,https://supabase.com/docs,Supabase open-source Firebase alternative with Postgres,backend
+prisma,Prisma,web,https://www.prisma.io/docs,Prisma next-generation Node.js and TypeScript ORM,backend
+graphql,GraphQL,web,https://graphql.org/learn/,GraphQL query language for APIs specification and guides,api
+trpc,tRPC,web,https://trpc.io/docs,tRPC end-to-end typesafe APIs for TypeScript,api
+typescript,TypeScript,web,https://www.typescriptlang.org/docs/,TypeScript language handbook and deep reference,language
+python,Python,web,https://docs.python.org/3/,Python 3 language reference and standard library,language
+rust,Rust,git,https://github.com/rust-lang/book.git,The Rust Programming Language official book,language
+go,Go,web,https://go.dev/doc/,Go programming language documentation and standard library,language
+kotlin,Kotlin,web,https://kotlinlang.org/docs/home.html,Kotlin modern JVM and multiplatform language,language
+swift,Swift,web,https://www.swift.org/documentation/,Swift Apple programming language documentation,language
+elixir,Elixir,web,https://hexdocs.pm/elixir/,Elixir functional concurrent fault-tolerant language,language
+mdn,MDN Web Docs,web,https://developer.mozilla.org/en-US/docs/Web,Mozilla Web APIs HTML CSS and JavaScript reference,web
+flutter,Flutter,web,https://docs.flutter.dev/,Flutter cross-platform mobile web and desktop UI toolkit,mobile
+tauri,Tauri,web,https://tauri.app/start/,Tauri Rust-powered cross-platform desktop app framework,desktop
+electron,Electron,web,https://www.electronjs.org/docs/latest/,Electron cross-platform desktop app framework,desktop
+vitest,Vitest,web,https://vitest.dev/guide/,Vitest Vite-native unit testing framework,testing
+pytest,pytest,web,https://docs.pytest.org/en/stable/,pytest powerful Python testing framework,testing
