@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Build package
+        run: uv build
+
+  release:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Build Linux binary
+        run: ./scripts/build-linux-release.sh
+
+      - name: Archive release artifact
+        run: tar -C dist -czf dist/devdoc-linux-x86_64.tar.gz devdoc-linux-x86_64
+
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f main-latest
+          git push origin refs/tags/main-latest --force
+          if gh release view main-latest >/dev/null 2>&1; then
+            gh release upload main-latest dist/devdoc-linux-x86_64.tar.gz --clobber
+            gh release edit main-latest \
+              --title "main-latest" \
+              --notes "Latest successful Linux server build from the main branch."
+          else
+            gh release create main-latest dist/devdoc-linux-x86_64.tar.gz \
+              --title "main-latest" \
+              --notes "Latest successful Linux server build from the main branch."
+          fi

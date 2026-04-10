@@ -14,7 +14,6 @@ from rich.table import Table
 
 from . import config
 from . import kb as kb_module
-from .crawler import check_git_remote, crawl_git, crawl_web, detect_source_type
 
 out = Console(stderr=False)  # normal output
 err = Console(stderr=True)  # status / progress
@@ -138,6 +137,8 @@ def add(
             f"[green]{disp_name}[/green]  ([dim]{kb_entry['category']}[/dim])"
         )
     else:
+        from .crawler import detect_source_type
+
         stype = source_type or detect_source_type(url)
         disp_name = name
 
@@ -147,11 +148,15 @@ def add(
     source_info = config.add_source(name, url, stype)
 
     if stype == "git":
+        from .crawler import crawl_git
+
         commit_hash = crawl_git(source_info, console=err)
         ok = commit_hash is not None
         if ok and commit_hash:
             config.update_source_commit(name, commit_hash)
     else:
+        from .crawler import crawl_web
+
         ok = crawl_web(source_info, max_pages=max_pages, delay=delay, console=err)
 
     if ok:
@@ -438,6 +443,8 @@ def info(name: str):
 @click.option("--delay", default=0.5, show_default=True)
 def update(name: str | None, max_pages: int, delay: float):
     """Update one or all documentation sources."""
+    from .crawler import check_git_remote, crawl_git, crawl_web
+
     sources = config.list_sources()
     if not sources:
         err.print("[yellow]No sources configured.[/yellow]")
