@@ -4,6 +4,21 @@ A CLI tool that crawls documentation (websites or Git repositories), saves it as
 
 ---
 
+## What You Can Do
+
+With DevDoc, you can:
+
+1. Add public documentation from websites or Git repositories
+2. Use a built-in knowledge base of common docs without looking up URLs yourself
+3. Keep documentation cached locally for fast offline searching
+4. Search docs from the terminal before connecting any MCP client
+5. Run an MCP server for local AI tools over `stdio`
+6. Run an HTTP/SSE MCP server for agents and remote tooling
+7. Start the service in Docker with a single startup script
+8. Update, inspect, and remove documentation sources at any time
+
+---
+
 ## Requirements
 
 | Tool | Notes |
@@ -44,12 +59,14 @@ The script:
 ### Manual (any platform)
 
 ```bash
-uv tool install --python 3.13 /path/to/godot-docs
+uv tool install --python 3.13 /path/to/devdoc
 ```
 
 ---
 
 ## Quick Start
+
+### Local CLI
 
 ```bash
 # Add from the built-in knowledge base (no URL needed):
@@ -65,9 +82,41 @@ devdoc add mylib https://docs.example.com/
 devdoc start
 ```
 
+### Docker
+
+```bash
+./start-docker.sh
+```
+
+This builds the image, starts the container, and exposes the SSE endpoint on `http://localhost:8080/sse`.
+
+Use a different port if needed:
+
+```bash
+./start-docker.sh 9090
+```
+
 ---
 
 ## All Commands
+
+### Command Summary
+
+| Command | What it does |
+|---------|--------------|
+| `devdoc kb` | Browse built-in documentation sources |
+| `devdoc add` | Add and download a documentation source |
+| `devdoc list` | List all configured sources |
+| `devdoc status` | Show health and environment details |
+| `devdoc info` | Inspect one source in detail |
+| `devdoc update` | Refresh one or all sources |
+| `devdoc remove` / `devdoc rm` | Delete a source |
+| `devdoc search` | Search local docs from the terminal |
+| `devdoc start` | Run the MCP server |
+| `devdoc stop` | Stop the background SSE daemon |
+| `devdoc logs` | View daemon logs |
+| `devdoc mcp-config` | Print MCP client configuration |
+| `devdoc init-mcp` | Attempt to configure supported MCP clients |
 
 ### `devdoc kb [query] [-c category]`
 
@@ -236,6 +285,45 @@ devdoc start
 devdoc start --transport sse --port 8080 --host 0.0.0.0
 ```
 
+### Docker startup
+
+Build and start the Docker container with the included startup script:
+
+```bash
+./start-docker.sh
+```
+
+Use a different port by passing it as the first argument:
+
+```bash
+./start-docker.sh 9090
+```
+
+The script:
+1. Builds the local Docker image
+2. Starts the container in SSE mode
+3. Maps the selected port to the same port in the container
+4. Persists DevDoc data in the Docker volume `devdoc-data`
+
+The container entrypoint uses `PORT` and defaults to `8080`.
+
+You can also override names with environment variables:
+
+```bash
+IMAGE_NAME=my-devdoc CONTAINER_NAME=my-devdoc DATA_VOLUME=my-devdoc-data ./start-docker.sh
+```
+
+Useful Docker commands:
+
+```bash
+docker ps
+docker logs -f devdoc
+docker stop devdoc
+docker start devdoc
+docker rm -f devdoc
+docker volume ls
+```
+
 ---
 
 ### `devdoc mcp-config`
@@ -286,6 +374,57 @@ get_document("godot/classes/class_animationplayer.md")
 
 ---
 
+## Typical Workflows
+
+### 1. Add docs and search locally
+
+```bash
+devdoc add python
+devdoc search "asyncio gather"
+```
+
+### 2. Add a custom documentation site
+
+```bash
+devdoc add mylib https://docs.example.com/
+devdoc search "authentication token" -s mylib
+```
+
+### 3. Run for a desktop MCP client
+
+```bash
+devdoc start
+```
+
+Then generate client configuration:
+
+```bash
+devdoc mcp-config
+```
+
+### 4. Run as a networked SSE service
+
+```bash
+devdoc start --transport sse --host 0.0.0.0 --port 8080
+```
+
+### 5. Run in the background
+
+```bash
+devdoc start --transport sse --daemon
+devdoc logs
+devdoc stop
+```
+
+### 6. Run in Docker
+
+```bash
+./start-docker.sh
+docker logs -f devdoc
+```
+
+---
+
 ## Storage Layout
 
 ```
@@ -311,6 +450,16 @@ get_document("godot/classes/class_animationplayer.md")
 # From the project directory:
 uv tool install --reinstall --python 3.13 .
 ```
+
+---
+
+## Notes
+
+- `stdio` mode is intended for local MCP clients such as Claude Desktop or LM Studio.
+- `sse` mode is intended for tools that connect over HTTP.
+- Web crawling may require Playwright browser installation.
+- Git sources work best when `git` is installed locally.
+- Docker mode persists DevDoc data in a named Docker volume, so your source list and downloaded docs survive container replacement.
 
 ---
 
