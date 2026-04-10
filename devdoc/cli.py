@@ -11,18 +11,19 @@ import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 
-from . import config, kb as kb_module
+from . import config
+from . import kb as kb_module
 from .crawler import check_git_remote, crawl_git, crawl_web, detect_source_type
 
-out = Console(stderr=False)   # normal output
-err = Console(stderr=True)    # status / progress
+out = Console(stderr=False)  # normal output
+err = Console(stderr=True)  # status / progress
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _human_size(total_bytes: int) -> str:
     for unit in ("B", "KB", "MB", "GB"):
@@ -40,10 +41,10 @@ def _count_files(path: Path) -> int:
     return len(list(path.rglob("*.md")))
 
 
-
 # ---------------------------------------------------------------------------
 # CLI group
 # ---------------------------------------------------------------------------
+
 
 @click.group()
 @click.version_option("0.1.0", prog_name="devdoc")
@@ -64,17 +65,32 @@ def main():
 # devdoc add
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 @click.argument("name")
 @click.argument("url", required=False, default=None)
-@click.option("--max-pages", default=500, show_default=True,
-              help="Maximum pages to crawl (web sources only).")
-@click.option("--delay", default=0.5, show_default=True,
-              help="Seconds between requests (web sources only).")
-@click.option("--type", "source_type", default=None,
-              type=click.Choice(["git", "web"]),
-              help="Force source type (auto-detected by default).")
-def add(name: str, url: str | None, max_pages: int, delay: float, source_type: str | None):
+@click.option(
+    "--max-pages",
+    default=500,
+    show_default=True,
+    help="Maximum pages to crawl (web sources only).",
+)
+@click.option(
+    "--delay",
+    default=0.5,
+    show_default=True,
+    help="Seconds between requests (web sources only).",
+)
+@click.option(
+    "--type",
+    "source_type",
+    default=None,
+    type=click.Choice(["git", "web"]),
+    help="Force source type (auto-detected by default).",
+)
+def add(
+    name: str, url: str | None, max_pages: int, delay: float, source_type: str | None
+):
     """Add a documentation source and download it.\n
     Omit URL to look up the source in the built-in knowledge base.\n
     \b
@@ -97,26 +113,32 @@ def add(name: str, url: str | None, max_pages: int, delay: float, source_type: s
         # ── Knowledge base lookup ──────────────────────────────────────────
         kb_entry = kb_module.lookup(name)
         if kb_entry is None:
-            err.print(f"[red bold]✗ '{name}' not found in the knowledge base.[/red bold]")
+            err.print(
+                f"[red bold]✗ '{name}' not found in the knowledge base.[/red bold]"
+            )
             # Suggest close matches
             matches = kb_module.search(name)
             if matches:
                 err.print("\n[yellow]Did you mean one of these?[/yellow]")
                 for m in matches[:5]:
-                    err.print(f"  [cyan]{m['key']}[/cyan]  {m['name']}  [dim]{m['description'][:60]}[/dim]")
+                    description = m["description"][:60]
+                    err.print(
+                        f"  [cyan]{m['key']}[/cyan]  "
+                        f"{m['name']}  [dim]{description}[/dim]"
+                    )
             else:
-                err.print(f"\nBrowse all available sources:  [bold]devdoc kb[/bold]")
+                err.print("\nBrowse all available sources:  [bold]devdoc kb[/bold]")
             sys.exit(1)
 
-        url        = kb_entry["url"]
-        stype      = source_type or kb_entry["type"]
-        disp_name  = kb_entry["name"]
+        url = kb_entry["url"]
+        stype = source_type or kb_entry["type"]
+        disp_name = kb_entry["name"]
         err.print(
             f"[bold]Knowledge base:[/bold] [cyan]{name}[/cyan] → "
             f"[green]{disp_name}[/green]  ([dim]{kb_entry['category']}[/dim])"
         )
     else:
-        stype     = source_type or detect_source_type(url)
+        stype = source_type or detect_source_type(url)
         disp_name = name
 
     err.print(f"[bold]Adding[/bold] [cyan]{name}[/cyan] ([green]{stype}[/green])")
@@ -135,7 +157,7 @@ def add(name: str, url: str | None, max_pages: int, delay: float, source_type: s
     if ok:
         config.update_source_timestamp(name)
         err.print(f"\n[green bold]✓ '{name}' added successfully.[/green bold]")
-        err.print(f"[dim]Start the MCP server:  devdoc start[/dim]")
+        err.print("[dim]Start the MCP server:  devdoc start[/dim]")
     else:
         err.print(f"\n[red bold]✗ Failed to add '{name}'.[/red bold]")
         sys.exit(1)
@@ -144,6 +166,7 @@ def add(name: str, url: str | None, max_pages: int, delay: float, source_type: s
 # ---------------------------------------------------------------------------
 # devdoc list  — full information about every source
 # ---------------------------------------------------------------------------
+
 
 @main.command("list")
 def list_cmd():
@@ -155,26 +178,26 @@ def list_cmd():
         return
 
     t = Table(title="DevDoc Sources", show_lines=True, expand=True)
-    t.add_column("Name",    style="cyan bold", no_wrap=True)
-    t.add_column("Type",    style="green",     no_wrap=True)
-    t.add_column("Docs",    justify="right",   no_wrap=True)
-    t.add_column("Size",    justify="right",   no_wrap=True)
-    t.add_column("Added",   no_wrap=True)
+    t.add_column("Name", style="cyan bold", no_wrap=True)
+    t.add_column("Type", style="green", no_wrap=True)
+    t.add_column("Docs", justify="right", no_wrap=True)
+    t.add_column("Size", justify="right", no_wrap=True)
+    t.add_column("Added", no_wrap=True)
     t.add_column("Updated", no_wrap=True)
     t.add_column("URL")
 
     for name, info in sources.items():
         p = Path(info["path"])
         if p.exists():
-            doc_str  = str(_count_files(p))
+            doc_str = str(_count_files(p))
             size_str = _human_size(_dir_size(p))
         else:
-            doc_str  = "[red]–[/red]"
+            doc_str = "[red]–[/red]"
             size_str = "–"
 
-        added   = (info.get("added")        or "–").split("T")[0]
+        added = (info.get("added") or "–").split("T")[0]
         updated = (info.get("last_updated") or "never").split("T")[0]
-        url     = info["url"]
+        url = info["url"]
         if len(url) > 60:
             url = url[:57] + "…"
 
@@ -188,17 +211,18 @@ def list_cmd():
 # ---------------------------------------------------------------------------
 
 _CATEGORY_COLORS = {
-    "gamedev":   "magenta",
-    "frontend":  "cyan",
-    "backend":   "green",
-    "language":  "yellow",
-    "graphics":  "blue",
-    "mobile":    "bright_cyan",
-    "desktop":   "bright_blue",
-    "testing":   "bright_yellow",
-    "api":       "bright_green",
-    "web":       "bright_white",
+    "gamedev": "magenta",
+    "frontend": "cyan",
+    "backend": "green",
+    "language": "yellow",
+    "graphics": "blue",
+    "mobile": "bright_cyan",
+    "desktop": "bright_blue",
+    "testing": "bright_yellow",
+    "api": "bright_green",
+    "web": "bright_white",
 }
+
 
 def _cat_color(cat: str) -> str:
     return _CATEGORY_COLORS.get(cat, "white")
@@ -206,8 +230,12 @@ def _cat_color(cat: str) -> str:
 
 @main.command("kb")
 @click.argument("query", required=False, default=None)
-@click.option("--category", "-c", default=None,
-              help="Filter by category (gamedev, frontend, backend, …).")
+@click.option(
+    "--category",
+    "-c",
+    default=None,
+    help="Filter by category (gamedev, frontend, backend, …).",
+)
 def kb(query: str | None, category: str | None):
     """Browse the built-in documentation knowledge base.\n
     \b
@@ -235,6 +263,7 @@ def kb(query: str | None, category: str | None):
 
     # Group by category for nicer display
     from collections import defaultdict
+
     grouped: dict[str, list[dict]] = defaultdict(list)
     for e in entries:
         grouped[e["category"]].append(e)
@@ -248,7 +277,7 @@ def kb(query: str | None, category: str | None):
             expand=True,
             title_justify="left",
         )
-        t.add_column("Key",  style=f"{color} bold", no_wrap=True, width=14)
+        t.add_column("Key", style=f"{color} bold", no_wrap=True, width=14)
         t.add_column("Name", no_wrap=True, width=20)
         t.add_column("Type", width=5)
         t.add_column("Description")
@@ -259,20 +288,23 @@ def kb(query: str | None, category: str | None):
         out.print(t)
 
     total = len(entries)
-    out.print(f"\n[dim]{total} entries — use [bold]devdoc add <key>[/bold] to download any of them[/dim]")
+    out.print(
+        f"\n[dim]{total} entries — use "
+        "[bold]devdoc add <key>[/bold] to download any of them[/dim]"
+    )
 
 
 # ---------------------------------------------------------------------------
 # devdoc status  — overall health of the devdoc installation
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 def status():
     """Show overall devdoc installation and source health."""
     import shutil as sh
 
-    sources  = config.list_sources()
-    home_dir = config.DEVDOC_HOME
+    sources = config.list_sources()
     docs_dir = config.DOCS_DIR
 
     # Header panel
@@ -282,7 +314,7 @@ def status():
     for info in sources.values():
         p = Path(info["path"])
         if p.exists():
-            total_docs  += _count_files(p)
+            total_docs += _count_files(p)
             total_bytes += _dir_size(p)
 
     header = (
@@ -303,21 +335,21 @@ def status():
 
     # Per-source health table
     t = Table(show_header=True, show_lines=False, expand=True)
-    t.add_column("Source",  style="cyan bold", no_wrap=True)
-    t.add_column("Type",    style="green",     no_wrap=True)
+    t.add_column("Source", style="cyan bold", no_wrap=True)
+    t.add_column("Type", style="green", no_wrap=True)
     t.add_column("State")
-    t.add_column("Docs",    justify="right")
-    t.add_column("Size",    justify="right")
+    t.add_column("Docs", justify="right")
+    t.add_column("Size", justify="right")
     t.add_column("Updated", no_wrap=True)
 
     for name, info in sources.items():
         p = Path(info["path"])
         if not p.exists():
-            state    = "[red]missing[/red]"
-            doc_str  = "–"
+            state = "[red]missing[/red]"
+            doc_str = "–"
             size_str = "–"
         else:
-            doc_str  = str(_count_files(p))
+            doc_str = str(_count_files(p))
             size_str = _human_size(_dir_size(p))
             commit = info.get("commit_hash", "")
             if info["type"] == "git" and commit:
@@ -335,6 +367,7 @@ def status():
 # devdoc info <name>  — detailed view of one source
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 @click.argument("name")
 def info(name: str):
@@ -345,7 +378,7 @@ def info(name: str):
         out.print(f"Known sources: {', '.join(sources) or '(none)'}")
         sys.exit(1)
 
-    src  = sources[name]
+    src = sources[name]
     path = Path(src["path"])
 
     lines: list[str] = [
@@ -358,12 +391,14 @@ def info(name: str):
     ]
 
     if not path.exists():
-        lines.append("  [red]Local files not found — run: devdoc update " + name + "[/red]")
+        lines.append(
+            "  [red]Local files not found — run: devdoc update " + name + "[/red]"
+        )
         out.print(Panel("\n".join(lines), title="Source Info", border_style="cyan"))
         return
 
     doc_count = _count_files(path)
-    size      = _dir_size(path)
+    size = _dir_size(path)
     lines += [
         "",
         f"  Markdown files : [bold]{doc_count}[/bold]",
@@ -383,7 +418,7 @@ def info(name: str):
         lines.append("  Contents:")
         for entry in top:
             icon = "📁" if entry.is_dir() else "📄"
-            sub  = f"  ({len(list(entry.rglob('*.md')))} md)" if entry.is_dir() else ""
+            sub = f"  ({len(list(entry.rglob('*.md')))} md)" if entry.is_dir() else ""
             lines.append(f"    {icon} {entry.name}{sub}")
         remaining = len(list(p for p in path.iterdir())) - len(top)
         if remaining > 0:
@@ -395,6 +430,7 @@ def info(name: str):
 # ---------------------------------------------------------------------------
 # devdoc update
 # ---------------------------------------------------------------------------
+
 
 @main.command()
 @click.argument("name", required=False)
@@ -419,7 +455,11 @@ def update(name: str | None, max_pages: int, delay: float):
             stored_hash = info.get("commit_hash")
             needs_update, remote_hash = check_git_remote(info["url"], stored_hash)
             if not needs_update:
-                err.print(f"[green]✓ {src_name} already up-to-date[/green]  [dim]({stored_hash[:10]})[/dim]")
+                short_hash = (stored_hash or "")[:10]
+                err.print(
+                    f"[green]✓ {src_name} already up-to-date[/green]  "
+                    f"[dim]({short_hash})[/dim]"
+                )
                 continue
             commit_hash = crawl_git(info, console=err)
             ok = commit_hash is not None
@@ -438,6 +478,7 @@ def update(name: str | None, max_pages: int, delay: float):
 # devdoc remove
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 @click.argument("name")
 @click.option("--yes", is_flag=True, help="Skip confirmation.")
@@ -449,9 +490,7 @@ def remove(name: str, yes: bool):
         sys.exit(1)
 
     if not yes:
-        click.confirm(
-            f"Remove '{name}' and delete all downloaded files?", abort=True
-        )
+        click.confirm(f"Remove '{name}' and delete all downloaded files?", abort=True)
 
     src_path = Path(sources[name]["path"])
     if src_path.exists():
@@ -481,31 +520,44 @@ _LOG_FILE = config.DEVDOC_HOME / "devdoc.log"
 def _daemon_running() -> int | None:
     """Return PID if the daemon is running, else None."""
     import os
+
     if not _PID_FILE.exists():
         return None
     try:
         pid = int(_PID_FILE.read_text().strip())
-        os.kill(pid, 0)   # signal 0 = just check existence
+        os.kill(pid, 0)  # signal 0 = just check existence
         return pid
     except (ValueError, OSError):
         return None
 
 
 @main.command()
-@click.option("--transport", default="stdio",
-              type=click.Choice(["stdio", "sse"]),
-              show_default=True,
-              help="MCP transport: stdio (default) or sse (HTTP/SSE).")
-@click.option("--host", default="0.0.0.0", show_default=True,
-              help="Bind host (SSE mode only).")
-@click.option("--port", default=8080, show_default=True,
-              help="Bind port (SSE mode only).")
-@click.option("--daemon", "-d", is_flag=True,
-              help="Run as a background daemon (SSE transport only).")
-@click.option("--log-messages", default="none",
-              type=click.Choice(["none", "incoming", "outgoing", "both"]),
-              show_default=True,
-              help="Log MCP messages to stderr (none, incoming, outgoing, both).")
+@click.option(
+    "--transport",
+    default="stdio",
+    type=click.Choice(["stdio", "sse"]),
+    show_default=True,
+    help="MCP transport: stdio (default) or sse (HTTP/SSE).",
+)
+@click.option(
+    "--host", default="0.0.0.0", show_default=True, help="Bind host (SSE mode only)."
+)
+@click.option(
+    "--port", default=8080, show_default=True, help="Bind port (SSE mode only)."
+)
+@click.option(
+    "--daemon",
+    "-d",
+    is_flag=True,
+    help="Run as a background daemon (SSE transport only).",
+)
+@click.option(
+    "--log-messages",
+    default="none",
+    type=click.Choice(["none", "incoming", "outgoing", "both"]),
+    show_default=True,
+    help="Log MCP messages to stderr (none, incoming, outgoing, both).",
+)
 def start(transport: str, host: str, port: int, daemon: bool, log_messages: str):
     """Start the MCP server.\n
     \b
@@ -528,13 +580,23 @@ def start(transport: str, host: str, port: int, daemon: bool, log_messages: str)
         pid = _daemon_running()
         if pid:
             err.print(f"[yellow]Daemon already running (PID {pid}).[/yellow]")
-            err.print(f"[dim]Stop with:  devdoc stop[/dim]")
+            err.print("[dim]Stop with:  devdoc stop[/dim]")
             sys.exit(1)
 
         config.ensure_dirs()
         devdoc_bin = shutil.which("devdoc") or sys.argv[0]
-        cmd = [devdoc_bin, "start", "--transport", "sse", "--host", host, "--port", str(port),
-               "--log-messages", log_messages]
+        cmd = [
+            devdoc_bin,
+            "start",
+            "--transport",
+            "sse",
+            "--host",
+            host,
+            "--port",
+            str(port),
+            "--log-messages",
+            log_messages,
+        ]
 
         with open(_LOG_FILE, "a") as log_f:
             proc = subprocess.Popen(
@@ -548,16 +610,21 @@ def start(transport: str, host: str, port: int, daemon: bool, log_messages: str)
         err.print(f"[green bold]✓ DevDoc daemon started[/green bold]  (PID {proc.pid})")
         err.print(f"  [cyan]SSE endpoint:[/cyan]  http://{host}:{port}/sse")
         err.print(f"  [cyan]Log:[/cyan]           {_LOG_FILE}")
-        err.print(f"  [dim]Stop with:     devdoc stop[/dim]")
-        err.print(f"  [dim]Follow logs:   devdoc logs[/dim]")
+        err.print("  [dim]Stop with:     devdoc stop[/dim]")
+        err.print("  [dim]Follow logs:   devdoc logs[/dim]")
         return
 
     sources = config.list_sources()
     if not sources:
-        err.print("[yellow]Warning: no sources configured — server will start empty.[/yellow]")
+        err.print(
+            "[yellow]Warning: no sources configured — server will start empty.[/yellow]"
+        )
         err.print("[dim]  devdoc add <name> <url>[/dim]\n")
     else:
-        err.print(f"[bold]Starting DevDoc MCP ({transport}) with {len(sources)} source(s):[/bold]")
+        err.print(
+            f"[bold]Starting DevDoc MCP ({transport}) with "
+            f"{len(sources)} source(s):[/bold]"
+        )
         for src_name, info in sources.items():
             p = Path(info["path"])
             count = len(list(p.rglob("*.md"))) if p.exists() else 0
@@ -570,6 +637,7 @@ def start(transport: str, host: str, port: int, daemon: bool, log_messages: str)
         err.print(f"  [dim]Message logging:[/dim] {log_messages}")
 
     from .server import run
+
     run(transport=transport, host=host, port=port, log_messages=log_messages)
 
 
@@ -577,15 +645,19 @@ def start(transport: str, host: str, port: int, daemon: bool, log_messages: str)
 # devdoc stop  — stop the background daemon
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 def stop():
     """Stop the background MCP daemon."""
-    import os, signal
+    import os
+    import signal
 
     pid = _daemon_running()
     if pid is None:
         if _PID_FILE.exists():
-            err.print("[yellow]Stale PID file — daemon is not running. Cleaning up.[/yellow]")
+            err.print(
+                "[yellow]Stale PID file — daemon is not running. Cleaning up.[/yellow]"
+            )
             _PID_FILE.unlink()
         else:
             err.print("[yellow]Daemon is not running.[/yellow]")
@@ -604,6 +676,7 @@ def stop():
 # devdoc logs  — tail the daemon log
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 @click.option("--lines", "-n", default=50, show_default=True, help="Lines to show.")
 @click.option("--follow", "-f", is_flag=True, help="Follow log output (like tail -f).")
@@ -611,11 +684,15 @@ def logs(lines: int, follow: bool):
     """Show or follow the daemon log file."""
     if not _LOG_FILE.exists():
         err.print(f"[yellow]No log file found at {_LOG_FILE}[/yellow]")
-        err.print("[dim]Start the daemon first:  devdoc start --transport sse --daemon[/dim]")
+        err.print(
+            "[dim]Start the daemon first:  devdoc start --transport sse --daemon[/dim]"
+        )
         return
 
     pid = _daemon_running()
-    status = f"[green]running (PID {pid})[/green]" if pid else "[yellow]stopped[/yellow]"
+    status = (
+        f"[green]running (PID {pid})[/green]" if pid else "[yellow]stopped[/yellow]"
+    )
     err.print(f"[bold]DevDoc daemon:[/bold] {status}  [dim]{_LOG_FILE}[/dim]\n")
 
     if follow:
@@ -631,10 +708,10 @@ def logs(lines: int, follow: bool):
 # devdoc search  (quick local test, no MCP client needed)
 # ---------------------------------------------------------------------------
 
+
 @main.command()
 @click.argument("query")
-@click.option("--source", "-s", default=None,
-              help="Limit to a specific source.")
+@click.option("--source", "-s", default=None, help="Limit to a specific source.")
 @click.option("--limit", "-n", default=10, show_default=True)
 def search(query: str, source: str | None, limit: int):
     """Search documentation locally (no MCP client needed)."""
@@ -663,9 +740,9 @@ def search(query: str, source: str | None, limit: int):
 # devdoc mcp-config  (print client configuration snippet)
 # ---------------------------------------------------------------------------
 
+
 @main.command("mcp-config")
-@click.option("--transport", default="stdio",
-              type=click.Choice(["stdio", "sse"]))
+@click.option("--transport", default="stdio", type=click.Choice(["stdio", "sse"]))
 @click.option("--port", default=8080)
 def mcp_config(transport: str, port: int):
     """Print an MCP client configuration snippet (Claude Desktop, etc.)."""
@@ -700,10 +777,17 @@ def mcp_config(transport: str, port: int):
 # devdoc completion  — install shell tab completion
 # ---------------------------------------------------------------------------
 
+
 @main.command()
-@click.option("--shell", default=None, type=click.Choice(["bash", "zsh", "fish"]),
-              help="Shell type (auto-detected if not specified).")
-@click.option("--install", is_flag=True, help="Write the completion hook to your shell profile.")
+@click.option(
+    "--shell",
+    default=None,
+    type=click.Choice(["bash", "zsh", "fish"]),
+    help="Shell type (auto-detected if not specified).",
+)
+@click.option(
+    "--install", is_flag=True, help="Write the completion hook to your shell profile."
+)
 def completion(shell: str | None, install: bool):
     """Enable shell tab completion for devdoc.\n
     \b
@@ -718,7 +802,8 @@ def completion(shell: str | None, install: bool):
       echo 'eval "$(_DEVDOC_COMPLETE=zsh_source devdoc)"' >> ~/.zshrc
 
     Manual fish:
-      echo 'eval (env _DEVDOC_COMPLETE=fish_source devdoc)' >> ~/.config/fish/config.fish
+      echo 'eval (env _DEVDOC_COMPLETE=fish_source devdoc)' >>
+      ~/.config/fish/config.fish
     """
     import os
 
@@ -752,15 +837,19 @@ def completion(shell: str | None, install: bool):
             out.print(f"[green]✓ Completion installed in {profile}[/green]")
             out.print(f"[dim]Reload with:  source {profile}[/dim]")
     else:
-        out.print(f"[bold]Shell:[/bold] [cyan]{shell}[/cyan]  [dim](profile: {profile})[/dim]\n")
+        out.print(
+            f"[bold]Shell:[/bold] [cyan]{shell}[/cyan]  "
+            f"[dim](profile: {profile})[/dim]\n"
+        )
         out.print(f"Add this line to [dim]{profile}[/dim]:\n")
         out.print(f"  [green]{line}[/green]\n")
-        out.print(f"Or auto-install with:  [bold]devdoc completion --install[/bold]")
+        out.print("Or auto-install with:  [bold]devdoc completion --install[/bold]")
 
 
 # ---------------------------------------------------------------------------
 # devdoc init-mcp  — interactive MCP config wizard
 # ---------------------------------------------------------------------------
+
 
 def _wsl_windows_home() -> Path | None:
     """Return Windows home as a WSL path, or None if not in WSL."""
@@ -771,14 +860,18 @@ def _wsl_windows_home() -> Path | None:
         # Ask Windows for USERPROFILE, then convert the path
         r1 = subprocess.run(
             ["cmd.exe", "/c", "echo %USERPROFILE%"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         win_path = r1.stdout.strip()
         if not win_path or "%" in win_path:
             return None
         r2 = subprocess.run(
             ["wslpath", "-u", win_path],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         p = r2.stdout.strip()
         return Path(p) if p else None
@@ -790,9 +883,12 @@ def _make_mcp_entry(devdoc_bin: str) -> dict:
     return {"command": devdoc_bin, "args": ["start"]}
 
 
-def _json_mcp_install(config_path: Path, devdoc_bin: str, top_key: str = "mcpServers") -> str:
+def _json_mcp_install(
+    config_path: Path, devdoc_bin: str, top_key: str = "mcpServers"
+) -> str:
     """Merge the devdoc MCP entry into a JSON config file. Returns status string."""
     import json as _json
+
     config_path.parent.mkdir(parents=True, exist_ok=True)
     data: dict = {}
     if config_path.exists():
@@ -814,9 +910,17 @@ def _build_client_registry(win_home: Path | None) -> list[dict]:
 
     # Claude Desktop config path — prefer Windows path on WSL
     if win_home:
-        claude_desktop_path = win_home / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json"
+        claude_desktop_path = (
+            win_home / "AppData" / "Roaming" / "Claude" / "claude_desktop_config.json"
+        )
     elif sys.platform == "darwin":
-        claude_desktop_path = home / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        claude_desktop_path = (
+            home
+            / "Library"
+            / "Application Support"
+            / "Claude"
+            / "claude_desktop_config.json"
+        )
     else:
         claude_desktop_path = home / ".config" / "Claude" / "claude_desktop_config.json"
 
@@ -890,7 +994,12 @@ def _build_client_registry(win_home: Path | None) -> list[dict]:
 
 
 @main.command("init-mcp")
-@click.option("--all", "install_all", is_flag=True, help="Install for all detected clients without prompting.")
+@click.option(
+    "--all",
+    "install_all",
+    is_flag=True,
+    help="Install for all detected clients without prompting.",
+)
 def init_mcp(install_all: bool):
     """Interactive wizard to configure devdoc as an MCP server.\n
     Detects installed MCP clients and installs the server config.
@@ -920,7 +1029,8 @@ def init_mcp(install_all: bool):
         out.print(f"  [cyan]{i}.[/cyan] {c['name']}  [dim]({c['key']})[/dim]")
 
     if not_found:
-        out.print(f"\n[dim]Not detected ({len(not_found)}): {', '.join(c['key'] for c in not_found)}[/dim]")
+        missing = ", ".join(c["key"] for c in not_found)
+        out.print(f"\n[dim]Not detected ({len(not_found)}): {missing}[/dim]")
 
     out.print()
 
@@ -943,7 +1053,9 @@ def init_mcp(install_all: bool):
                     if 0 <= idx < len(detected):
                         chosen.add(idx)
                     else:
-                        err.print(f"[yellow]  Ignoring invalid selection: {part}[/yellow]")
+                        err.print(
+                            f"[yellow]  Ignoring invalid selection: {part}[/yellow]"
+                        )
             targets = [detected[i] for i in sorted(chosen)]
 
     if not targets:
@@ -960,7 +1072,17 @@ def init_mcp(install_all: bool):
 
         if client["method"] == "cli":
             # Claude Code: use `claude mcp add`
-            cmd = ["claude", "mcp", "add", "--scope", "user", "devdoc", "--", devdoc_bin, "start"]
+            cmd = [
+                "claude",
+                "mcp",
+                "add",
+                "--scope",
+                "user",
+                "devdoc",
+                "--",
+                devdoc_bin,
+                "start",
+            ]
             try:
                 r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
                 if r.returncode == 0:
@@ -995,7 +1117,9 @@ def init_mcp(install_all: bool):
                 cfg_path.write_text(_json.dumps(data, indent=2))
                 status = "installed"
             else:
-                status = _json_mcp_install(client["path"], devdoc_bin, client.get("json_key", "mcpServers"))
+                status = _json_mcp_install(
+                    client["path"], devdoc_bin, client.get("json_key", "mcpServers")
+                )
         else:
             status = "error: unknown method"
 

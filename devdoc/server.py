@@ -10,7 +10,8 @@ from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from . import config, search as search_module
+from . import config
+from . import search as search_module
 
 # Message logging mode: "none", "incoming", "outgoing", "both"
 _log_messages: str = "none"
@@ -29,7 +30,12 @@ def _log_outgoing(tool_name: str, result: str):
         return
     ts = datetime.now().strftime("%H:%M:%S")
     preview = textwrap.shorten(result, width=200, placeholder="…")
-    print(f"[{ts}] → {tool_name} response ({len(result)} chars): {preview}", file=sys.stderr, flush=True)
+    print(
+        f"[{ts}] → {tool_name} response ({len(result)} chars): {preview}",
+        file=sys.stderr,
+        flush=True,
+    )
+
 
 mcp = FastMCP(
     "DevDoc",
@@ -59,6 +65,7 @@ def _get_index() -> search_module.DocumentIndex:
 # Tools
 # ---------------------------------------------------------------------------
 
+
 @mcp.tool()
 def list_sources() -> str:
     """List all configured documentation sources with document counts."""
@@ -75,7 +82,9 @@ def list_sources() -> str:
         p = Path(info["path"])
         count = len(list(p.rglob("*.md"))) if p.exists() else 0
         updated = (info.get("last_updated") or "never").split("T")[0]
-        lines.append(f"- **{name}** `{info['type']}` — {count} docs — updated: {updated}")
+        lines.append(
+            f"- **{name}** `{info['type']}` — {count} docs — updated: {updated}"
+        )
         lines.append(f"  {info['url']}")
     result = "\n".join(lines)
     _log_outgoing("list_sources", result)
@@ -127,7 +136,10 @@ def get_document(path: str) -> str:
 
     source_name, rel = parts
     if source_name not in sources:
-        return f"Unknown source '{source_name}'. Run list_sources to see available sources."
+        return (
+            f"Unknown source '{source_name}'. "
+            "Run list_sources to see available sources."
+        )
 
     file_path = Path(sources[source_name]["path"]) / rel
     # Try .md then .rst fallback
@@ -194,8 +206,13 @@ def list_documents(source: str, path: str = "") -> str:
 # Entry point
 # ---------------------------------------------------------------------------
 
-def run(transport: str = "stdio", host: str = "0.0.0.0", port: int = 8080,
-        log_messages: str = "none"):
+
+def run(
+    transport: str = "stdio",
+    host: str = "0.0.0.0",
+    port: int = 8080,
+    log_messages: str = "none",
+):
     global _log_messages
     _log_messages = log_messages
     parts = [f"[devdoc] MCP server starting ({transport})"]

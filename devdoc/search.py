@@ -12,7 +12,7 @@ class DocumentIndex:
     """In-memory keyword index over documentation files."""
 
     def __init__(self):
-        self._docs: dict[str, dict] = {}          # doc_path -> meta
+        self._docs: dict[str, dict] = {}  # doc_path -> meta
         self._word_index: defaultdict[str, set] = defaultdict(set)
 
     # ------------------------------------------------------------------
@@ -97,8 +97,7 @@ def build_index(sources: dict) -> DocumentIndex:
         md_files = list(source_path.rglob("*.md"))
         # Include RST files that were not converted
         rst_only = [
-            f for f in source_path.rglob("*.rst")
-            if not f.with_suffix(".md").exists()
+            f for f in source_path.rglob("*.rst") if not f.with_suffix(".md").exists()
         ]
 
         for file in md_files + rst_only:

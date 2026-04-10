@@ -17,5 +17,21 @@ dependencies = [
 [project.scripts]
 devdoc = "devdoc.cli:main"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["devdoc"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

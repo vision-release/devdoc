@@ -37,7 +37,8 @@ def search(query: str) -> list[dict]:
     """Case-insensitive substring search across key, name, description."""
     q = query.lower()
     return [
-        e for e in all_entries()
+        e
+        for e in all_entries()
         if q in e["key"] or q in e["name"].lower() or q in e["description"].lower()
     ]
 
